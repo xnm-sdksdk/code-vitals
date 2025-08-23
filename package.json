@@ -1,7 +1,7 @@
 {
   "name": "code-vitals",
   "author": "Nuno Mendonça",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Enterprise-ready code quality and security analyzer for TypeScript & CI/CD pipelines",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
