@@ -87,17 +87,6 @@ tsconfig.json
 README.md
 ```
 
-## Publishing
-
-CodeVitals is ready to be published to NPM:
-
-```bash
-npm login
-npm publish --access public
-```
-
-Ensure `node_modules` is ignored in `.npmignore`. Only source code and the bin folder should be included.
-
 ## License
 
 MIT License
