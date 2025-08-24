@@ -62,8 +62,8 @@ jobs:
         with:
           node-version: "18"
       - run: npm install -g code-vitals
-      - run: code-vitals deps
-      - run: code-vitals code
+      - run: code-v deps
+      - run: code-v code
 ```
 
 The pipeline fails if any vulnerabilities, dead code, or unsafe patterns are detected.
