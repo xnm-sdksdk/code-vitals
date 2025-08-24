@@ -7,11 +7,11 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "rootDir": ".",
-    "outDir": "dist",
+    "outDir": "./dist",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "skipLibCheck": true
   },
-  "include": ["code-v.ts", "src/**/*"]
+  "include": ["cli.ts", "src/**/*"]
 }

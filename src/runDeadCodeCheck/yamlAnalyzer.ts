@@ -3,16 +3,18 @@ import path from "path";
 import yaml from "js-yaml";
 import { log, success } from "../utils/logger.js";
 
+const ignoreDirs: string[] = ["node_modules", ".git", "dist"]
+
 function isYaml(filePath: string) {
     return filePath.endsWith(".yml") || filePath.endsWith(".yaml");
 }
 
-function getYamlFiles(dir: string): string[] {
+function getYamlFiles(dir: string, ignoreDirs: string[]): string[] {
     let results: string[] = [];
     for (const f of fs.readdirSync(dir, { withFileTypes: true })) {
         const fullPath = path.join(dir, f.name);
         if (f.isDirectory()) {
-            results = results.concat(getYamlFiles(fullPath));
+            results = results.concat(getYamlFiles(fullPath, ignoreDirs));
         } else if (f.isFile() && isYaml(f.name)) {
             results.push(fullPath);
         }
@@ -21,13 +23,22 @@ function getYamlFiles(dir: string): string[] {
 }
 
 export function analyzeYaml(rootDir: string) {
-    const files = getYamlFiles(rootDir);
+    const files = getYamlFiles(rootDir, ignoreDirs);
     const unsafePatterns: Record<string, string[]> = {};
+    const SECRET_PATTERNS: RegExp[] = [
+        /aws_secret_access_key\s*:\s*[A-Za-z0-9/+=]{40}/i,
+        /password\s*:\s*.+/i,
+        /token\s*:\s*.+/i
+    ];
 
     for (const file of files) {
         try {
             const content = fs.readFileSync(file, "utf-8");
-            const doc = yaml.load(content);
+            const doc = yaml.load(content)
+
+            if (content.includes("&") || content.includes("*")) {
+                unsafePatterns[file] = (unsafePatterns[file] || []).concat("YAML contains anchors/aliases (&, *) which may hide malicious references")
+            }
 
             if (/rm\s+-rf/.test(content)) {
                 unsafePatterns[file] = (unsafePatterns[file] || []).concat("Unsafe shell command: rm -rf");
@@ -37,10 +48,21 @@ export function analyzeYaml(rootDir: string) {
                 unsafePatterns[file] = (unsafePatterns[file] || []).concat("Dynamic import detected in node -e");
             }
 
-            const traverse = (obj: any) => {
+            const traverse = (obj: any, pathTrace = "") => {
                 if (obj && typeof obj === "object") {
                     for (const key of Object.keys(obj)) {
                         const val = obj[key];
+                        const currentPath = pathTrace ? `${pathTrace}.${key}` : key;
+
+                        if (typeof val === "string") {
+                            for (const pattern of SECRET_PATTERNS) {
+                                if (pattern.test(`${key}: ${val}`)) {
+                                    unsafePatterns[file] = (unsafePatterns[file] || []).concat(
+                                        `Hardcoded secret detected at ${currentPath}`
+                                    );
+                                }
+                            }
+                        }
 
                         if (key === "run" && typeof val === "string") {
                             const issues: string[] = [];
@@ -56,7 +78,26 @@ export function analyzeYaml(rootDir: string) {
                             }
                         }
 
-                        traverse(val);
+                        if (key === "kind" && (val === 'Pod' || val === "Deployment")) {
+                            const spec = obj.spec ?? {};
+                            const containers = spec.containers ?? [];
+                            for (const c of containers) {
+                                const name = c.name || "<unknown>";
+                                const sec = c.securityContext ?? {};
+                                if (sec.privileged === true) {
+                                    unsafePatterns[file] = (unsafePatterns[file] || []).concat(
+                                        `Container '${name}' runs as privileged`
+                                    );
+                                }
+                                if (sec.runAsUser === 0) {
+                                    unsafePatterns[file] = (unsafePatterns[file] || []).concat(
+                                        `Container '${name}' runs as root user`
+                                    );
+                                }
+                            }
+                        }
+
+                        traverse(val, currentPath);
                     }
                 }
             };
