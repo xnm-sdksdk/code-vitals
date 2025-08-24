@@ -13,7 +13,7 @@ program.command("deps").description("Checking dependency health...").action(asyn
     await runDependencyCheck();
 });
 
-program.command("code").description("Checking dead code...").action(async () => {
+program.command("code").description("Checking unused and dead code...").action(async () => {
     log("Running dead code checks...");
     runDeadCodeCheck(process.cwd());
 });

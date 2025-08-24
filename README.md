@@ -6,6 +6,8 @@ CodeVitals is a CLI tool for TypeScript projects that performs:
 - Outdated package checks
 - Dead code analysis (unused exports and imports)
 - CI/CD YAML security pattern checks
+- Kubernetes security pattern checks
+- Unused variables
 
 It is intended for enterprise-level projects to enforce safe and maintainable code.
 
@@ -72,14 +74,14 @@ The pipeline fails if any vulnerabilities, dead code, or unsafe patterns are det
 bin/                 # CLI entry point
 src/
   runDeadCodeCheck/
-    analyzer.ts       # Dead code analysis
+    index.ts          # Dependency check runner
+    tsAnalyzer.ts     # Dead code analysis
     astParser.ts      # TypeScript AST parser
+    yamlAnalyzer.ts       # YAML unsafe patterns analysis
   runDependencyCheck/
     index.ts          # Dependency check runner
     npmAudit.ts       # NPM audit
     outdated.ts       # Outdated packages check
-  runYamlCheck/
-    analyzer.ts       # YAML unsafe patterns analysis
   utils/
     logger.ts         # Logging utilities
 package.json

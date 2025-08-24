@@ -90,3 +90,61 @@ export function analyzeDeadCode(rootDir: string) {
         success("[SUCCESS] No dead exports or unused imports in TypeScript!");
     }
 }
+
+
+export function analyzeUnused(rootDir: string) {
+    let a;
+    const fileExt: string = "tsconfig.json"
+    const configPath = ts.findConfigFile(rootDir, ts.sys.fileExists, fileExt);
+    let configParse: ts.ParsedCommandLine;
+
+    if (!configPath) {
+        log(`[WARN] File ${configPath} not found`)
+        return []
+    } else {
+        const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
+        configParse = ts.parseJsonConfigFileContent(configFile.config, ts.sys, path.dirname(configPath))
+    }
+
+    const program = ts.createProgram({
+        rootNames: configParse.fileNames,
+        options: {
+            ...configParse.options,
+            noUnusedLocals: true,
+            noUnusedParameters: true,
+        },
+    });
+
+    const diagnostics = [
+        ...program.getSemanticDiagnostics(),
+        ...program.getOptionsDiagnostics(),
+        ...program.getGlobalDiagnostics(),
+    ];
+
+    const unused: { file: string; message: string }[] = [];
+
+    for (const diag of diagnostics) {
+        if (!diag.file || !diag.start) continue;
+
+        const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start);
+        const message = ts.flattenDiagnosticMessageText(diag.messageText, "\n");
+
+        if (message.includes("is declared but its value is never read") ||
+            message.includes("parameter") && message.includes("never used")) {
+            unused.push({
+                file: diag.file.fileName,
+                message: `[${line + 1},${character + 1}] ${message}`
+            });
+        }
+    }
+
+    if (unused.length > 0) {
+        const reportPath = path.join(rootDir, "codeVitals-unused-report.json");
+        fs.writeFileSync(reportPath, JSON.stringify(unused, null, 2));
+        log(`[WARN] Unused code detected! Report saved at ${reportPath}`);
+    } else {
+        log("[SUCCESS] No unused variables or parameters detected.");
+    }
+
+    return unused;
+}
