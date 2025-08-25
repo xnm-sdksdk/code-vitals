@@ -26,9 +26,9 @@ Ensure your Node.js version is >= 18.
 Run the CLI in your project root:
 
 ```bash
-code-vitals deps    # Run dependency checks
-code-vitals code    # Run dead code and unsafe pattern analysis
-code-vitals help    # Show usage information
+code-v deps    # Run dependency checks
+code-v code    # Run dead code and unsafe pattern analysis
+code-v help    # Show usage information
 ```
 
 ## Reports

@@ -6,7 +6,7 @@ import * as commander from "commander";
 
 const program = new commander.Command();
 
-program.name("code-vitals").description("Analyze JS/TS project health: dependencies + dead code.").version("0.1.0");
+program.name("code-vitals").description("Analyze JS/TS project health: dependencies, dead code and misconfigurations.").version("1.0.6");
 
 program.command("deps").description("Checking dependency health...").action(async () => {
     log("Running dependency checks...");

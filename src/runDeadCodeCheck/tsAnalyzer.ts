@@ -93,7 +93,6 @@ export function analyzeDeadCode(rootDir: string) {
 
 
 export function analyzeUnused(rootDir: string) {
-    let a;
     const fileExt: string = "tsconfig.json"
     const configPath = ts.findConfigFile(rootDir, ts.sys.fileExists, fileExt);
     let configParse: ts.ParsedCommandLine;
