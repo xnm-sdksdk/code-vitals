@@ -118,6 +118,7 @@ export function analyzeUnused(rootDir: string) {
         ...program.getSemanticDiagnostics(),
         ...program.getOptionsDiagnostics(),
         ...program.getGlobalDiagnostics(),
+        ...program.getDeclarationDiagnostics(),
     ];
 
     const unused: { file: string; message: string }[] = [];
