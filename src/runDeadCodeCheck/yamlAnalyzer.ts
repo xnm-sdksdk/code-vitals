@@ -6,7 +6,7 @@ import { log, success } from "../utils/logger.js";
 const ignoreDirs: string[] = ["node_modules", ".git", "dist"]
 
 function isYaml(filePath: string) {
-    return filePath.endsWith(".yml") || filePath.endsWith(".yaml");
+    return filePath.toLowerCase().endsWith(".yml") || filePath.toLowerCase().endsWith(".yaml");
 }
 
 function getYamlFiles(dir: string, ignoreDirs: string[]): string[] {
@@ -28,7 +28,8 @@ export function analyzeYaml(rootDir: string) {
     const SECRET_PATTERNS: RegExp[] = [
         /aws_secret_access_key\s*:\s*[A-Za-z0-9/+=]{40}/i,
         /password\s*:\s*.+/i,
-        /token\s*:\s*.+/i
+        /token\s*:\s*.+/i,
+        /credentials\s*:\s*.+/i
     ];
 
     for (const file of files) {
@@ -112,6 +113,61 @@ export function analyzeYaml(rootDir: string) {
         const jsonPath = path.join(rootDir, "codeVitals-yaml-report.json");
         fs.writeFileSync(jsonPath, JSON.stringify({ unsafePatterns }, null, 2));
         log(`[WARN] Unsafe patterns in YAML detected! Report: ${jsonPath}`);
+    } else {
+        success("[SUCCESS] No unsafe patterns detected in YAML!");
+    }
+
+    return unsafePatterns;
+}
+
+export function analyzeK8s(rootDir: string) {
+    const files = getYamlFiles(rootDir, ignoreDirs);
+    const unsafePatterns: Record<string, string[]> = {};
+
+    for (const file of files) {
+        try {
+            const content = fs.readFileSync(file, "utf8");
+            const docs = yaml.loadAll(content)
+            const issues: string[] = []
+
+            for (const doc of docs) {
+                const replicas = (doc as any).spec?.replicas;
+
+                if (!doc || typeof doc !== "object") continue;
+                if (typeof replicas === "number" && replicas < 2) issues.push("Replicas must be at least 2.")
+
+                const containers = (doc as any).spec?.template?.spec?.containers;
+                if (Array.isArray(containers)) {
+                    for (const container of containers) {
+                        if (container.image?.endsWith(":latest")) {
+                            issues.push(`Container ${container.name || ""} uses ':latest' tag.`);
+                        }
+                        if (!container.resources?.limits) {
+                            issues.push(`Container ${container.name || ""} has no resource limits.`);
+                        }
+                        if (!container.livenessProbe) {
+                            issues.push(`Container ${container.name || ""} has no liveness probe.`);
+                        }
+                        if (!container.readinessProbe) {
+                            issues.push(`Container ${container.name || ""} has no readiness probe.`);
+                        }
+                    }
+                }
+                if (issues.length > 0) {
+                    unsafePatterns[file] = (unsafePatterns[file] || []).concat(issues);
+                }
+            }
+
+        }
+        catch {
+            unsafePatterns[file] = ["Failed to parse YAML"];
+        }
+    }
+
+    if (Object.keys(unsafePatterns).length > 0) {
+        const jsonPath = path.join(rootDir, "codeVitals-k8s-report.json");
+        fs.writeFileSync(jsonPath, JSON.stringify({ unsafePatterns }, null, 2));
+        log(`[WARN] Unsafe patterns in YAML in Kubernetes detected! Report: ${jsonPath}`);
     } else {
         success("[SUCCESS] No unsafe patterns detected in YAML!");
     }
