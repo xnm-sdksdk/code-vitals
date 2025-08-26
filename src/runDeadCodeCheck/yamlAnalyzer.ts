@@ -33,6 +33,7 @@ export function analyzeYaml(rootDir: string) {
     ];
 
     for (const file of files) {
+        log("Running YAML analysis");
         try {
             const content = fs.readFileSync(file, "utf-8");
             const doc = yaml.load(content)
@@ -125,6 +126,7 @@ export function analyzeK8s(rootDir: string) {
     const unsafePatterns: Record<string, string[]> = {};
 
     for (const file of files) {
+        log("Running Kubernetes analysis.");
         try {
             const content = fs.readFileSync(file, "utf8");
             const docs = yaml.loadAll(content)

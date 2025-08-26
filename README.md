@@ -2,7 +2,7 @@
 
 CodeVitals is a CLI tool for TypeScript projects that performs:
 
-- Dependency vulnerability checks (npm audit)
+- Dependency vulnerability checks, outdated packages
 - Outdated package checks
 - Dead code analysis (unused exports and imports)
 - CI/CD YAML security pattern checks

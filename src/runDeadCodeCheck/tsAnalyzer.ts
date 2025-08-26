@@ -17,6 +17,7 @@ export function analyzeDeadCode(rootDir: string) {
     const unsafePatterns: Record<string, string[]> = {};
 
     for (const file of files) {
+        log("Running dead code analysis.");
         const ast = getAST(file);
         if (!ast) continue;
 
@@ -98,7 +99,7 @@ export function analyzeUnused(rootDir: string) {
     let configParse: ts.ParsedCommandLine;
 
     if (!configPath) {
-        log(`[WARN] File ${configPath} not found`)
+        log(`[WARN] File ${configPath} not found`);
         return []
     } else {
         const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -124,6 +125,7 @@ export function analyzeUnused(rootDir: string) {
     const unused: { file: string; message: string }[] = [];
 
     for (const diag of diagnostics) {
+        log("Running unused code analysis.");
         if (!diag.file || !diag.start) continue;
 
         const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start);
