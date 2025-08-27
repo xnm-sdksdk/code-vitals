@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
 import yaml from "js-yaml";
-import { log, success } from "../utils/logger.js";
+import { log } from "../utils/logger.js";
+import { generateJsonFiles } from "../utils/generateFiles.js";
 
 const ignoreDirs: string[] = ["node_modules", ".git", "dist"]
 
@@ -31,9 +32,9 @@ export function analyzeYaml(rootDir: string) {
         /token\s*:\s*.+/i,
         /credentials\s*:\s*.+/i
     ];
+    log("Running YAML analysis");
 
     for (const file of files) {
-        log("Running YAML analysis");
         try {
             const content = fs.readFileSync(file, "utf-8");
             const doc = yaml.load(content)
@@ -110,13 +111,7 @@ export function analyzeYaml(rootDir: string) {
         }
     }
 
-    if (Object.keys(unsafePatterns).length > 0) {
-        const jsonPath = path.join(rootDir, "codeVitals-yaml-report.json");
-        fs.writeFileSync(jsonPath, JSON.stringify({ unsafePatterns }, null, 2));
-        log(`[WARN] Unsafe patterns in YAML detected! Report: ${jsonPath}`);
-    } else {
-        success("[SUCCESS] No unsafe patterns detected in YAML!");
-    }
+    generateJsonFiles(rootDir, unsafePatterns, "code-vitals-yaml-report.json", "YAML")
 
     return unsafePatterns;
 }
@@ -124,9 +119,9 @@ export function analyzeYaml(rootDir: string) {
 export function analyzeK8s(rootDir: string) {
     const files = getYamlFiles(rootDir, ignoreDirs);
     const unsafePatterns: Record<string, string[]> = {};
+    log("Running Kubernetes analysis.");
 
     for (const file of files) {
-        log("Running Kubernetes analysis.");
         try {
             const content = fs.readFileSync(file, "utf8");
             const docs = yaml.loadAll(content)
@@ -166,13 +161,7 @@ export function analyzeK8s(rootDir: string) {
         }
     }
 
-    if (Object.keys(unsafePatterns).length > 0) {
-        const jsonPath = path.join(rootDir, "codeVitals-k8s-report.json");
-        fs.writeFileSync(jsonPath, JSON.stringify({ unsafePatterns }, null, 2));
-        log(`[WARN] Unsafe patterns in YAML in Kubernetes detected! Report: ${jsonPath}`);
-    } else {
-        success("[SUCCESS] No unsafe patterns detected in YAML!");
-    }
+    generateJsonFiles(rootDir, unsafePatterns, "code-vitals-k8s-report.json", "K8s")
 
     return unsafePatterns;
 }

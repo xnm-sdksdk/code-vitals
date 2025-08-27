@@ -2,7 +2,7 @@ import ts from "typescript";
 import fs from "fs";
 import path from "path";
 import { parseFiles, getAST } from "./astParser.js";
-import { log, success } from "../utils/logger.js";
+import { log, success, warn } from "../utils/logger.js";
 
 function isInProject(filePath: string, rootDir: string) {
     return filePath.startsWith(rootDir) && !filePath.includes("node_modules") && !filePath.includes("dist");
@@ -15,9 +15,9 @@ export function analyzeDeadCode(rootDir: string) {
     const importsDeclared: Record<string, Set<string>> = {};
     const usageMap: Record<string, Set<string>> = {};
     const unsafePatterns: Record<string, string[]> = {};
+    log("Running dead code analysis.");
 
     for (const file of files) {
-        log("Running dead code analysis.");
         const ast = getAST(file);
         if (!ast) continue;
 
@@ -84,7 +84,7 @@ export function analyzeDeadCode(rootDir: string) {
         const report = { deadExports, unusedImports };
         const jsonPath = path.join(rootDir, "codeVitals-ts-report.json");
         fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
-        log(`[WARN] TypeScript issues detected! Report generated at ${jsonPath}`);
+        warn(`[WARN] TypeScript issues detected! Report generated at ${jsonPath}`);
     } else {
         const jsonPath = path.join(rootDir, "codeVitals-ts-report.json");
         if (fs.existsSync(jsonPath)) fs.unlinkSync(jsonPath);
@@ -97,9 +97,10 @@ export function analyzeUnused(rootDir: string) {
     const fileExt: string = "tsconfig.json"
     const configPath = ts.findConfigFile(rootDir, ts.sys.fileExists, fileExt);
     let configParse: ts.ParsedCommandLine;
+    log("Running unused code analysis.");
 
     if (!configPath) {
-        log(`[WARN] File ${configPath} not found`);
+        warn(`[WARN] File ${configPath} not found`);
         return []
     } else {
         const configFile = ts.readConfigFile(configPath, ts.sys.readFile);
@@ -125,7 +126,6 @@ export function analyzeUnused(rootDir: string) {
     const unused: { file: string; message: string }[] = [];
 
     for (const diag of diagnostics) {
-        log("Running unused code analysis.");
         if (!diag.file || !diag.start) continue;
 
         const { line, character } = diag.file.getLineAndCharacterOfPosition(diag.start);
@@ -143,9 +143,9 @@ export function analyzeUnused(rootDir: string) {
     if (unused.length > 0) {
         const reportPath = path.join(rootDir, "codeVitals-unused-report.json");
         fs.writeFileSync(reportPath, JSON.stringify(unused, null, 2));
-        log(`[WARN] Unused code detected! Report saved at ${reportPath}`);
+        warn(`[WARN] Unused code detected! Report saved at ${reportPath}`);
     } else {
-        log("[SUCCESS] No unused variables or parameters detected.");
+        success("[SUCCESS] No unused variables or parameters detected.");
     }
 
     return unused;
