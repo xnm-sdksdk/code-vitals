@@ -1,48 +1,53 @@
 # CodeVitals
 
-CodeVitals is a CLI tool for TypeScript projects that performs:
+CodeVitals is a lightweight CLI tool for TypeScript and JavaScript projects that helps teams maintain secure, clean, and reliable code. It combines dependency checks, dead code analysis, and YAML/Kubernetes configuration audits into a single, easy-to-use tool.
 
-- Dependency vulnerability checks, outdated packages
-- Outdated package checks
-- Dead code analysis (unused exports and imports)
-- CI/CD YAML security pattern checks
-- Kubernetes security pattern checks and misconfigurations
-- Unused variables
+## Key Features
 
-It is intended for enterprise-level projects to enforce safe and maintainable code.
+- Dependency Health Checks – Detect vulnerable or outdated packages.
+- Dead Code Analysis – Identify unused exports, imports, and variables.
+- YAML Security Checks – Detect unsafe patterns in CI/CD pipeline configurations.
+- Kubernetes Best Practices – Spot common misconfigurations and security risks.
+- CI/CD Friendly – Exit codes and JSON reports make integration effortless.
+
+> Ideal for enterprise and team projects that want to enforce safe, maintainable, and scalable code practices.
 
 ## Installation
 
-Install via NPM:
+Install globally via NPM:
 
 ```bash
 npm install -g code-vitals
 ```
 
-Ensure your Node.js version is >= 18.
-
 ## Usage
 
-Run the CLI in your project root:
+Run CodeVitals in the root of your project:
 
 ```bash
-code-v deps    # Run dependency checks
-code-v code    # Run dead code and unsafe pattern analysis
-code-v help    # Show usage information
+# Check dependencies for vulnerabilities and outdated packages
+code-v deps
+
+# Analyze dead code, unused variables, and unsafe patterns
+code-v code
+
+# Show CLI help
+code-v help
 ```
 
 ## Reports
 
-Reports are generated in JSON format at the project root:
+CodeVitals generates JSON reports at the root of your project:
 
-- `codeVitals-ts-report.json`: TypeScript dead code analysis
-- `codeVitals-yaml-report.json`: YAML unsafe patterns analysis
+- `codeVitals-ts-report.json`: TypeScript dead code and unused imports/exports.
+- `codeVitals-yaml-report.json`: YAML unsafe patterns detection.
+- `codeVitals-k8s-report.json`: Kubernetes security and and configuration issues.
 
-Reports are overwritten on each run. If no issues are found, the files are removed automatically.
+> Reports are automatically overwritten on each run. If no issues are found, the files are removed.
 
 ## CI/CD Integration
 
-You can integrate CodeVitals in GitHub Actions or any CI pipeline:
+Easily integrate into your CI pipelines (GitHub Actions example):
 
 ```yaml
 name: CodeVitals Check
@@ -66,7 +71,7 @@ jobs:
       - run: code-v code
 ```
 
-The pipeline fails if any vulnerabilities, dead code, or unsafe patterns are detected.
+> The pipeline fails automatically if any vulnerabilities, dead code, or unsafe patterns are detected.
 
 ## Project Structure
 
@@ -77,7 +82,7 @@ src/
     index.ts          # Dependency check runner
     tsAnalyzer.ts     # Dead code analysis
     astParser.ts      # TypeScript AST parser
-    yamlAnalyzer.ts       # YAML unsafe patterns analysis
+    yamlAnalyzer.ts   # YAML unsafe patterns analysis
   runDependencyCheck/
     index.ts          # Dependency check runner
     npmAudit.ts       # NPM audit
@@ -88,6 +93,13 @@ package.json
 tsconfig.json
 README.md
 ```
+
+## Why CodeVitals?
+
+- All-in-one – Dependency, dead code, and config audits in a single tool.
+- Lightweight & Native – No extra dependencies, fully Node.js-based.
+- CI/CD Ready – JSON reports and exit codes for automated pipelines.
+- Easy to Use – Minimal setup, intuitive CLI.
 
 ## License
 
