@@ -1,10 +1,10 @@
-import { execSync } from "child_process";
 import { log, success, error } from "../utils/logger.js";
+import { runCommand } from "../utils/runCommand.js";
 
 export async function auditPackages() {
     log("Running audit.");
     try {
-        const result = execSync("npm audit --json", { encoding: "utf-8" }).toString();
+        const result = await runCommand("npm", ["audit", "--json"]);
         const audit = JSON.parse(result);
         if (audit.metadata.vulnerabilities.total === 0) {
             success("No vulnerabilities found.");
@@ -17,7 +17,7 @@ export async function auditPackages() {
 
     log("Running outdated dependencies.");
     try {
-        const outdatedResult = execSync("npm outdated --json", { encoding: "utf-8" }).toString();
+        const outdatedResult = await runCommand("npm", ["outdated", "--json"]);
         const outdatedOutput = outdatedResult ? JSON.parse(outdatedResult) : {};
         if (Object.keys(outdatedOutput).length === 0) {
             success("No Outdated packages found.")
